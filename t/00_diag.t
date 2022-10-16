@@ -16,6 +16,7 @@ $modules{$_} = $_ for qw(
   FFI::Platypus
   FFI::Platypus::Lang::Rust
   Test2::V0
+  YAML
 );
 
 

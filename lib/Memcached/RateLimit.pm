@@ -11,6 +11,14 @@ package Memcached::RateLimit {
   my $ffi = FFI::Platypus->new( api => 2, lang => 'Rust' );
   $ffi->bundle;
   $ffi->mangler(sub ($name) { "rl_$name" });
+  $ffi->type("object(@{[ __PACKAGE__ ]})" => 'rl');
+
+  $ffi->attach( new => ['string'] => 'u64' => sub ($xsub, $class, $url) {
+    my $index = $xsub->($url);
+    bless \$index, $class;
+  });
+
+  $ffi->attach( DESTROY => ['rl']);
 
 }
 
