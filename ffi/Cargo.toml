@@ -7,6 +7,5 @@ edition = "2021"
 crate-type = ["dylib"]
 
 [dependencies]
-memcache = "0.16"
-r2d2 = "*"
-anyhow = "*"
+memcache = "0.16.0"
+anyhow = "1.0.65"
