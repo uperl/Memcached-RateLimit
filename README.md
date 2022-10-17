@@ -2,6 +2,23 @@
 
 Sliding window rate limiting with Memcached
 
+# SYNOPSIS
+
+# DESCRIPTION
+
+# CONSTRUCTOR
+
+## new
+
+# METHODS
+
+## rate\_limit
+
+# SEE ALSO
+
+- [Cache::Memcached::Fast](https://metacpan.org/pod/Cache::Memcached::Fast)
+- [Redis::RateLimit](https://metacpan.org/pod/Redis::RateLimit)
+
 # AUTHOR
 
 Graham Ollis <plicease@cpan.org>

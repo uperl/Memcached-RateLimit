@@ -24,3 +24,27 @@ package Memcached::RateLimit {
 }
 
 1;
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+=head1 CONSTRUCTOR
+
+=head2 new
+
+=head1 METHODS
+
+=head2 rate_limit
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<Cache::Memcached::Fast>
+
+=item L<Redis::RateLimit>
+
+=back
+
+=cut
