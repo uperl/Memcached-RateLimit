@@ -67,7 +67,7 @@ pub extern "C" fn rl_new(url: *const i8) -> u64 {
 }
 
 #[no_mangle]
-pub extern "C" fn rl_rate_limit(index: u64, prefix: *const i8, size: u32, rate_max: u32, rate_seconds: u32) -> bool {
+pub extern "C" fn rl_rate_limit(index: u64, prefix: *const i8, size: u32, rate_max: u32, rate_seconds: u32) -> i32 {
   let prefix = unsafe { CStr::from_ptr(prefix) };
 
   STORE.with(|it| {
@@ -75,10 +75,11 @@ pub extern "C" fn rl_rate_limit(index: u64, prefix: *const i8, size: u32, rate_m
 
     return match it.get_mut(&index) {
       Some(rl)  => match rl.rate_limit(prefix, size, rate_max, rate_seconds) {
-        Ok(b)  => b,
-        Err(_) => {rl.client = None; false },
+        Ok(true)  => 1,
+        Ok(false) => 0,
+        Err(_) => {rl.client = None; -1 },
       },
-      None      => false
+      None      => -2
     }
   })
 }
