@@ -18,7 +18,8 @@ package Memcached::RateLimit {
     bless \$index, $class;
   });
 
-  $ffi->attach( DESTROY => ['rl']);
+  $ffi->attach( rate_limit => ['rl','string','u32','u32','u32'] => 'i32' );
+  $ffi->attach( DESTROY    => ['rl']);
 
 }
 
