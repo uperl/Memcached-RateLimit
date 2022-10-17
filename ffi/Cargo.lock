@@ -294,7 +294,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "memcache",
- "r2d2",
 ]
 
 [[package]]
