@@ -9,3 +9,4 @@ crate-type = ["dylib"]
 [dependencies]
 memcache = "0.16"
 r2d2 = "*"
+anyhow = "*"
