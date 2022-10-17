@@ -6,10 +6,26 @@ use memcache::Url;
 use memcache::Client;
 use memcache::ConnectionManager;
 use r2d2::ManageConnection;
+use anyhow::Result;
 
 struct Rl {
   manager: ConnectionManager,
   client: Option<Client>,
+}
+
+impl Rl {
+  fn new(url: &CStr) -> Result<Rl> {
+    let url = Url::parse(url.to_str()?)?;
+    let manager = ConnectionManager::new(url);
+    Ok(Rl {
+      manager: manager,
+      client: None,
+    })
+  }
+
+  fn rate_limit(&self, prefix: &CStr, size: u64, rate_max: u64, rate_seconds: u64) -> Result<bool> {
+    Ok(false)
+  }
 }
 
 thread_local!(
@@ -20,19 +36,9 @@ thread_local!(
 #[no_mangle]
 pub extern "C" fn rl_new(url: *const i8) -> u64 {
   let url = unsafe { CStr::from_ptr(url) };
-  let url = match url.to_str() {
-    Ok(url)  => url,
-    Err(_)   => return 0
-  };
-  let url = match Url::parse(url) {
-    Ok(url) => url,
-    Err(_)  => return 0
-  };
-  let manager = ConnectionManager::new(url);
-
-  let rl = Rl {
-    manager: manager,
-    client: None,
+  let rl = match Rl::new(url) {
+    Ok(rl) => rl,
+    Err(_) => return 0
   };
 
   let index = COUNTER.with(|it| {
