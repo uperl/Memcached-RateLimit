@@ -69,18 +69,19 @@ impl Rl {
             }
 
             if sum > rate_max {
-                return Ok(false);
+                return Ok(true);
             }
 
             if let Some(cas_id) = cas_id {
                 client.cas(&key, value + size, rate_seconds + 1, cas_id)?;
             }
 
-            Ok(true)
+            Ok(false)
         } else {
+            // TODO
             // shouldn't get in here?
             // but should probably error?
-            Ok(true)
+            Ok(false)
         }
     }
 }
@@ -113,7 +114,7 @@ pub extern "C" fn rl_new(url: *const i8) -> u64 {
 }
 
 #[no_mangle]
-pub extern "C" fn rl_rate_limit(
+pub extern "C" fn rl__rate_limit(
     index: u64,
     prefix: *const i8,
     size: u32,
@@ -134,7 +135,7 @@ pub extern "C" fn rl_rate_limit(
                     -1
                 }
             },
-            None => -2,
+            None => -1,
         };
     })
 }
