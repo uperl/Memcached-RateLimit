@@ -12,14 +12,41 @@ package Memcached::RateLimit {
   $ffi->bundle;
   $ffi->mangler(sub ($name) { "rl_$name" });
   $ffi->type("object(@{[ __PACKAGE__ ]})" => 'rl');
+  our %keep;
 
   $ffi->attach( new => ['string'] => 'u64' => sub ($xsub, $class, $url) {
     my $index = $xsub->($url);
     bless \$index, $class;
   });
 
-  $ffi->attach( rate_limit => ['rl','string','u32','u32','u32'] => 'i32' );
-  $ffi->attach( DESTROY    => ['rl']);
+  $ffi->attach( _rate_limit => ['rl','string','u32','u32','u32'] => 'i32');
+
+  $ffi->attach( DESTROY => ['rl'] => sub ($xsub, $self) {
+    delete $keep{$$self};
+  });
+
+  sub error_handler ($self, $sub)
+  {
+    $keep{$$self} = $sub;
+  }
+
+  sub rate_limit ($self, $name, $size, $rate_max, $rate_seconds)
+  {
+    my $ret = _rate_limit($self, $name, $size, $rate_max, $rate_seconds);
+    if($ret == -1)
+    {
+      # TODO: get the actual error from Rust
+      my $message = "memcached error";
+      $keep{$$self}->($self, $message) if defined $keep{$$self};
+      # fail open
+      return 0;
+    }
+    else
+    {
+      return $ret;
+    }
+  }
+
 
 }
 
@@ -36,6 +63,14 @@ package Memcached::RateLimit {
 =head1 METHODS
 
 =head2 rate_limit
+
+ $rl->rate_limt($name, $size, $rate_max, $rate_seconds);
+
+=head2 error_handler
+
+ $rl->error_handler(sub ($rl, $message) {
+   ...
+ });
 
 =head1 SEE ALSO
 

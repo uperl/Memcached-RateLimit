@@ -2,4 +2,8 @@
 
 set -ex
 
-cip pkg rust
+#cip pkg rust
+
+cip sudo apt-get update
+cip sudo apt-get install memcached
+cip exec memcached -l 127.0.0.1 -d

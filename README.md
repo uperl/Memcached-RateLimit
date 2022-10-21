@@ -14,6 +14,18 @@ Sliding window rate limiting with Memcached
 
 ## rate\_limit
 
+```
+$rl->rate_limt($name, $size, $rate_max, $rate_seconds);
+```
+
+## error\_handler
+
+```perl
+$rl->error_handler(sub ($rl, $message) {
+  ...
+});
+```
+
 # SEE ALSO
 
 - [Cache::Memcached::Fast](https://metacpan.org/pod/Cache::Memcached::Fast)
