@@ -5,6 +5,7 @@ use std::cell::Cell;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ffi::CStr;
+use std::str;
 use std::time::SystemTime;
 
 struct Rl {
@@ -48,15 +49,31 @@ impl Rl {
                 .collect();
             let keys: Vec<&str> = keys.iter().map(|s| &**s).collect();
             let tokens: HashMap<String, u32> = client.gets(&keys)?;
-            let _casvalue: (Vec<u8>, u32, Option<u64>) = client.get(&key)?.unwrap();
+            let (value, cas_id) = match client.get(&key)? {
+                Some((value, _, cas)) => (
+                    match str::from_utf8(&value) {
+                        Ok(value) => match value.parse::<u32>() {
+                            Ok(value) => value,
+                            Err(_) => 0,
+                        },
+                        Err(_) => 0,
+                    },
+                    cas,
+                ),
+                None => (0, None),
+            };
 
-            let mut sum = size;
+            let mut sum = value + size;
             for (_, v) in tokens {
                 sum += v;
             }
 
             if sum > rate_max {
                 return Ok(false);
+            }
+
+            if let Some(cas_id) = cas_id {
+                client.cas(&key, value + size, rate_seconds + 1, cas_id)?;
             }
 
             Ok(true)
