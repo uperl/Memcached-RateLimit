@@ -5,12 +5,14 @@ use std::cell::Cell;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ffi::CStr;
+use std::ffi::CString;
 use std::str;
 use std::time::SystemTime;
 
 struct Rl {
     url: Url,
     client: Option<Client>,
+    error: CString,
 }
 
 impl Rl {
@@ -19,6 +21,7 @@ impl Rl {
         Ok(Rl {
             url: url,
             client: None,
+            error: CString::new("")?,
         })
     }
 
@@ -42,7 +45,10 @@ impl Rl {
                 .as_secs();
 
             let key = format!("{}{}", prefix, now);
-            client.add(&key, 0, rate_seconds + 1)?;
+            match client.add(&key, 0, rate_seconds + 1) {
+              Ok(()) => (),
+              Err(_) => (),  // TODO return the error if it isn't a duplicate key error
+            };
 
             let keys: Vec<String> = (0..rate_seconds)
                 .map(|n| format!("{}{}", prefix, n))
@@ -124,19 +130,36 @@ pub extern "C" fn rl__rate_limit(
     let prefix = unsafe { CStr::from_ptr(prefix) };
 
     STORE.with(|it| {
-        let mut it = it.borrow_mut(); // does this need to be mut?
+        let mut it = it.borrow_mut();
 
         return match it.get_mut(&index) {
             Some(rl) => match rl.rate_limit(prefix, size, rate_max, rate_seconds) {
                 Ok(true) => 1,
                 Ok(false) => 0,
-                Err(_) => {
+                Err(e) => {
+                    if let Ok(error) = CString::new(e.to_string()) {
+                        rl.error = error;
+                    }
                     rl.client = None;
                     -1
                 }
             },
             None => -1,
         };
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn rl__error(index: u64) -> *const i8 {
+    STORE.with(|it| {
+        let it = it.borrow();
+
+        let error = match it.get(&index) {
+            Some(rl) => rl.error.as_ptr(),
+            None => CString::new("Invalid object index").unwrap().as_ptr(),  // TODO would be nice to use static C string somehow?
+        };
+
+        error
     })
 }
 

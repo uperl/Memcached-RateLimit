@@ -34,6 +34,16 @@ subtest 'unencrypted' => sub {
     0,
     '$rl->rate_limit("frooble-$$", 1, 20, 60) = 0');
 
+  is(
+    $rl->rate_limit("frooble-$$", 19, 20, 60),
+    0,
+    '$rl->rate_limit("frooble-$$", 19, 20, 60) = 0');
+
+  is(
+    $rl->rate_limit("frooble-$$", 1, 20, 60),
+    1,
+    '$rl->rate_limit("frooble-$$", 1, 20, 60) = 1');
+
   is \@error, [], 'no errors';
 
   # this should destroy

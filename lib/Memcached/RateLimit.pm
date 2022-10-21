@@ -19,7 +19,8 @@ package Memcached::RateLimit {
     bless \$index, $class;
   });
 
-  $ffi->attach( _rate_limit => ['rl','string','u32','u32','u32'] => 'i32');
+  $ffi->attach( _rate_limit => ['rl','string','u32','u32','u32'] => 'i32' );
+  $ffi->attach( _error => ['rl'] => 'string' );
 
   $ffi->attach( DESTROY => ['rl'] => sub ($xsub, $self) {
     delete $keep{$$self};
@@ -35,9 +36,7 @@ package Memcached::RateLimit {
     my $ret = _rate_limit($self, $name, $size, $rate_max, $rate_seconds);
     if($ret == -1)
     {
-      # TODO: get the actual error from Rust
-      my $message = "memcached error";
-      $keep{$$self}->($self, $message) if defined $keep{$$self};
+      $keep{$$self}->($self, $self->_error) if defined $keep{$$self};
       # fail open
       return 0;
     }
