@@ -2,8 +2,15 @@
 
 set -ex
 
-#cip pkg rust
+cip pkg rust
 
 cip sudo apt-get update
 cip sudo apt-get install memcached
 cip exec memcached -l 127.0.0.1 -d
+
+if [[ $CIP_TAG =~ jammy ]]; then
+  echo "SHOULD START MEMCACHED TLS HERE"
+  # TODO start memcached with tls
+else
+  echo "No TLS testing"
+fi
