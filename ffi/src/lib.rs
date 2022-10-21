@@ -28,16 +28,24 @@ impl Rl {
         rate_max: u32,
         rate_seconds: u32,
     ) -> Result<bool> {
+        let prefix = prefix.to_str()?;
+
         /* re-connect if necessary */
         if let None = self.client {
-            self.client = Some(Client::connect(self.url.clone().into_string())?)
+            self.client = Some(Client::connect(String::from(self.url.clone()))?)
         };
 
         if let Some(client) = &self.client {
             let now = SystemTime::now()
                 .duration_since(SystemTime::UNIX_EPOCH)?
                 .as_secs();
-            client.add(prefix.to_str()?, 0, rate_seconds + 1)?;
+
+            let key = format!("{}{}", prefix, now);
+            client.add(&key, 0, rate_seconds + 1)?;
+
+            //let keys: Vec<&str> = (0..rate_seconds).map(|n| format!("{}{}", prefix, n).as_str() ).collect();
+            //let tokens = client.gets::<u64>(&keys)?;
+
             Ok(true)
         } else {
             // shouldn't get in here?
