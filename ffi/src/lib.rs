@@ -24,7 +24,7 @@ impl Rl {
     fn rate_limit(
         &mut self,
         prefix: &CStr,
-        size: u32,
+        _size: u32,
         rate_max: u32,
         rate_seconds: u32,
     ) -> Result<bool> {
@@ -43,13 +43,27 @@ impl Rl {
             let key = format!("{}{}", prefix, now);
             client.add(&key, 0, rate_seconds + 1)?;
 
-            //let keys: Vec<&str> = (0..rate_seconds).map(|n| format!("{}{}", prefix, n).as_str() ).collect();
-            //let tokens = client.gets::<u64>(&keys)?;
+            let keys: Vec<String> = (0..rate_seconds)
+                .map(|n| format!("{}{}", prefix, n))
+                .collect();
+            let keys: Vec<&str> = keys.iter().map(|s| &**s).collect();
+            let tokens: HashMap<String, u32> = client.gets(&keys)?;
+            let _casvalue: u32 = client.get(&key)?.unwrap();
+
+            let mut sum = 0;
+            for (_, v) in tokens {
+                sum += v;
+            }
+
+            if sum > rate_max {
+                return Ok(false);
+            }
 
             Ok(true)
         } else {
             // shouldn't get in here?
-            Ok(false)
+            // but should probably error?
+            Ok(true)
         }
     }
 }
