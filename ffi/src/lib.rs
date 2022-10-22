@@ -51,12 +51,8 @@ impl Rl {
             match client.add(&key, 0, rate_seconds + 1) {
                 Ok(()) => (),
                 Err(e) => match e {
-                    CommandError(e) => {
-                        if e == KeyExists {
-                            ()
-                        }
-                    },
-                    _ => bail!(e),
+                    CommandError(e) if e == KeyExists => (),
+                    e => bail!(e),
                 },
             };
 
