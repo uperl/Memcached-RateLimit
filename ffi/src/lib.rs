@@ -155,6 +155,8 @@ pub extern "C" fn rl__rate_limit(
     })
 }
 
+const INVALID_OBJECT_INDEX_ERROR_MESSAGE: *const u8 = b"Invalid object index\0" as *const u8;
+
 #[no_mangle]
 pub extern "C" fn rl__error(index: u64) -> *const i8 {
     STORE.with(|it| {
@@ -162,7 +164,7 @@ pub extern "C" fn rl__error(index: u64) -> *const i8 {
 
         let error = match it.get(&index) {
             Some(rl) => rl.error.as_ptr(),
-            None => CString::new("Invalid object index").unwrap().as_ptr(), // TODO would be nice to use static C string somehow?
+            None => INVALID_OBJECT_INDEX_ERROR_MESSAGE as *const i8,
         };
 
         error
