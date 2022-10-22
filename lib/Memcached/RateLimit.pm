@@ -53,11 +53,43 @@ package Memcached::RateLimit {
 
 =head1 SYNOPSIS
 
+ use Memcached::RateLimit;
+
+ my $rl = Memcached::RateLimit->new("memcache://localhost:11211");
+ $rl->error_handler(sub ($rl, $message) {
+   warn "rate limit error: $message";
+ });
+
+ # allow 30 requests per minute
+ if($rl->rate_limit("resource", 1, 30, 60))
+ {
+   # rate limit exceeded
+ }
+
 =head1 DESCRIPTION
+
+This module implements rate limiting logic.  It is intended for high
+volume websites that require limits on the access or modification to
+resources.  It is implemented using Rust and L<FFI::Platypus>, so you
+will need the rust toolchain in order to install this module.
+
+Why Rust?  Well none of the Perl Memcache clients I found supported
+TLS, and the Rust L<memcache crate|https://crates.io/crates/memcache>
+did.  Also Rust is fast and has a number of safety checks that give
+me confidence that it won't crash our app.
+
+The actual algorithm is based one used by Bugzilla, and by default
+it will "fail open", meaning if for some reason the client cannot
+connect to the Memcached server, it will B<allow> the request.
 
 =head1 CONSTRUCTOR
 
 =head2 new
+
+ my $rl = Memcached::RateLimit->new($url);
+
+Create a new instance of L<Memcached::RateLimit>.  The URL should be of the
+form shown in the L<synopsis/SYNOPSIS> above.
 
 =head1 METHODS
 
