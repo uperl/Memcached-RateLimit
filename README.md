@@ -4,11 +4,47 @@ Sliding window rate limiting with Memcached
 
 # SYNOPSIS
 
+```perl
+use Memcached::RateLimit;
+
+my $rl = Memcached::RateLimit->new("memcache://localhost:11211");
+$rl->error_handler(sub ($rl, $message) {
+  warn "rate limit error: $message";
+});
+
+# allow 30 requests per minute
+if($rl->rate_limit("resource", 1, 30, 60))
+{
+  # rate limit exceeded
+}
+```
+
 # DESCRIPTION
+
+This module implements rate limiting logic.  It is intended for high
+volume websites that require limits on the access or modification to
+resources.  It is implemented using Rust and [FFI::Platypus](https://metacpan.org/pod/FFI::Platypus), so you
+will need the rust toolchain in order to install this module.
+
+Why Rust?  Well none of the Perl Memcache clients I found supported
+TLS, and the Rust [memcache crate](https://crates.io/crates/memcache)
+did.  Also Rust is fast and has a number of safety checks that give
+me confidence that it won't crash our app.
+
+The actual algorithm is based one used by Bugzilla, and by default
+it will "fail open", meaning if for some reason the client cannot
+connect to the Memcached server, it will **allow** the request.
 
 # CONSTRUCTOR
 
 ## new
+
+```perl
+my $rl = Memcached::RateLimit->new($url);
+```
+
+Create a new instance of [Memcached::RateLimit](https://metacpan.org/pod/Memcached::RateLimit).  The URL should be of the
+form shown in the ["SYNOPSIS" in synopsis](https://metacpan.org/pod/synopsis#SYNOPSIS) above.
 
 # METHODS
 
