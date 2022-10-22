@@ -1,5 +1,8 @@
+use anyhow::bail;
 use anyhow::Result;
 use memcache::Client;
+use memcache::CommandError::KeyExists;
+use memcache::MemcacheError::CommandError;
 use memcache::Url;
 use std::cell::Cell;
 use std::cell::RefCell;
@@ -46,8 +49,15 @@ impl Rl {
 
             let key = format!("{}{}", prefix, now);
             match client.add(&key, 0, rate_seconds + 1) {
-              Ok(()) => (),
-              Err(_) => (),  // TODO return the error if it isn't a duplicate key error
+                Ok(()) => (),
+                Err(e) => match e {
+                    CommandError(e) => {
+                        if e == KeyExists {
+                            ()
+                        }
+                    },
+                    _ => bail!(e),
+                },
             };
 
             let keys: Vec<String> = (0..rate_seconds)
@@ -156,7 +166,7 @@ pub extern "C" fn rl__error(index: u64) -> *const i8 {
 
         let error = match it.get(&index) {
             Some(rl) => rl.error.as_ptr(),
-            None => CString::new("Invalid object index").unwrap().as_ptr(),  // TODO would be nice to use static C string somehow?
+            None => CString::new("Invalid object index").unwrap().as_ptr(), // TODO would be nice to use static C string somehow?
         };
 
         error
