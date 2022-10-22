@@ -51,4 +51,31 @@ subtest 'unencrypted' => sub {
 
 };
 
+subtest 'counterfit object!' => sub {
+
+  my $rl = bless \do { my $x = 42}, 'Memcached::RateLimit';
+  isa_ok $rl, 'Memcached::RateLimit';
+
+  note YAML::Dump($rl);
+
+  my @error;
+
+  $rl->error_handler(sub ($rl,$message) {
+    push @error, $message;
+    note "error:$message";
+  });
+
+  is(
+    $rl->rate_limit("frooble-$$", 1, 20, 60),
+    0,
+    '$rl->rate_limit("frooble-$$", 1, 20, 60) = 0');
+
+  is
+    \@error,
+    ["Invalid object index"],
+    "expected error";
+
+  undef $rl;
+};
+
 done_testing;
