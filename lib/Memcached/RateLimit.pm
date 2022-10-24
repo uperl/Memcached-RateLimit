@@ -89,7 +89,7 @@ connect to the Memcached server, it will B<allow> the request.
  my $rl = Memcached::RateLimit->new($url);
 
 Create a new instance of L<Memcached::RateLimit>.  The URL should be of the
-form shown in the L<synopsis|/SYNOPSIS> above.
+form shown in the synopsis above.
 
 =head1 METHODS
 
