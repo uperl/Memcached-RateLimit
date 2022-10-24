@@ -50,9 +50,20 @@ form shown in the ["SYNOPSIS" in synopsis](https://metacpan.org/pod/synopsis#SYN
 
 ## rate\_limit
 
+```perl
+my $limited = $rl->rate_limt($name, $size, $rate_max, $rate_seconds);
 ```
-$rl->rate_limt($name, $size, $rate_max, $rate_seconds);
-```
+
+This method returns a boolean true, if a request of `$size` exceeds the
+rate limit of `$rate_max` over the past `$rate_seconds`.  If you only
+want to rate limit the number of requests then you can set `$size` to 1.
+
+This method will return a boolean false, and increment the appropriate
+counters if the requests fits within the rate limit.
+
+This method will **also** return boolean false, if it is unable to connect
+to or otherwise experiences an error talking to the memcached server.
+In this case it will also call the [error handler](#error_handler).
 
 ## error\_handler
 
@@ -61,6 +72,13 @@ $rl->error_handler(sub ($rl, $message) {
   ...
 });
 ```
+
+This method will set the error handler, to be called in the case of an
+error with the memcached server.  It will pass in the instance of
+[Memcached::RateLimit](https://metacpan.org/pod/Memcached::RateLimit) as `$rl` and a diagnostic as `$message`.
+Since this module will fail open, it is probably useful to increment
+error counters and provide diagnostics with this method to your monitoring
+system.
 
 # SEE ALSO
 
