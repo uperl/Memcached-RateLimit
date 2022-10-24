@@ -153,8 +153,6 @@ pub extern "C" fn rl__rate_limit(
     })
 }
 
-const INVALID_OBJECT_INDEX_ERROR_MESSAGE: *const u8 = b"Invalid object index\0" as *const u8;
-
 #[no_mangle]
 pub extern "C" fn rl__error(index: u64) -> *const i8 {
     STORE.with(|it| {
@@ -162,7 +160,7 @@ pub extern "C" fn rl__error(index: u64) -> *const i8 {
 
         let error = match it.get(&index) {
             Some(rl) => rl.error.as_ptr(),
-            None => INVALID_OBJECT_INDEX_ERROR_MESSAGE as *const i8,
+            None => b"Invalid object index\0".as_ptr() as *const i8,
         };
 
         error
