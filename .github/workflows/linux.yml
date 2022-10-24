@@ -16,21 +16,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cip_tag:
-          - "5.37"
-          - "5.36-jammy"
-          - "5.36"
-          - "5.34"
-          - "5.32"
-          - "5.30"
-          - "5.28"
-          - "5.26"
-          - "5.24"
-          - "5.22"
-          - "5.20"
+        cip:
+          - tag: "5.37"
+          - tag: "5.36-jammy"
+            env: MEMCACHED_RATELIMIT_TLS_TEST=127.0.0.1:11212
+          - tag: "5.36"
+          - tag: "5.34"
+          - tag: "5.32"
+          - tag: "5.30"
+          - tag: "5.28"
+          - tag: "5.26"
+          - tag: "5.24"
+          - tag: "5.22"
+          - tag: "5.20"
 
     env:
-      CIP_TAG: ${{ matrix.cip_tag }}
+      CIP_TAG: ${{ matrix.cip.tag }}
+      CIP_ENV: MEMCACHED_RATELIMIT_TEST=127.0.0.1:11211 ${{ matrix.cip.env }}
 
     steps:
       - uses: actions/checkout@v2
