@@ -44,7 +44,7 @@ my $rl = Memcached::RateLimit->new($url);
 ```
 
 Create a new instance of [Memcached::RateLimit](https://metacpan.org/pod/Memcached::RateLimit).  The URL should be of the
-form shown in the ["SYNOPSIS" in synopsis](https://metacpan.org/pod/synopsis#SYNOPSIS) above.
+form shown in the synopsis above.
 
 # METHODS
 
