@@ -6,11 +6,13 @@ cip pkg rust
 
 cip sudo apt-get update
 cip sudo apt-get install memcached
-cip exec memcached -l 127.0.0.1 -d
 
-if [[ $CIP_TAG =~ jammy ]]; then
-  echo "SHOULD START MEMCACHED TLS HERE"
-  # TODO start memcached with tls
-else
-  echo "No TLS testing"
+if [[ $CIP_ENV =~ MEMCACHED_RATELIMIT_TEST ]]; then
+  ARGS=$( cip exec perl -E 'my($host, $port) = split /:/, $ENV{MEMCACHED_RATELIMIT_TEST}; say "-l $host -p $port"' )
+  cip exec memcached $ARGS -d
+fi
+
+if [[ $CIP_ENV =~ MEMCACHED_RATELIMIT_TLS_TEST ]]; then
+  ARGS=$( cip exec perl -E 'my($host, $port) = split /:/, $ENV{MEMCACHED_RATELIMIT_TLS_TEST}; say "-l $host -p $port"' )
+  cip exec memcached $ARGS -d -Z -o "ssl_key=/work/maint/localhost.key,ssl_chain_cert=/work/maint/localhost.crt"
 fi
