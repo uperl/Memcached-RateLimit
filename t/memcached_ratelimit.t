@@ -15,9 +15,16 @@ subtest 'basic create without use' => sub {
 
 };
 
+sub time_it :prototype(&) {
+  my $code = shift;
+  my $start = time;
+  $code->();
+  note "clocking in at: @{[ time - $start ]}s";
+}
+
 subtest 'unencrypted' => sub {
 
-  my $rl = Memcached::RateLimit->new("memcache://127.0.0.1:11211");
+  my $rl = Memcached::RateLimit->new("memcache://127.0.0.1:11211?timeout=5");
   isa_ok $rl, 'Memcached::RateLimit';
 
   note YAML::Dump($rl);
@@ -29,20 +36,26 @@ subtest 'unencrypted' => sub {
     note "error:$message";
   });
 
-  is(
-    $rl->rate_limit("frooble-$$", 1, 20, 60),
-    0,
-    '$rl->rate_limit("frooble-$$", 1, 20, 60) = 0');
+  time_it {
+    is(
+      $rl->rate_limit("frooble-$$", 1, 20, 60),
+      0,
+      '$rl->rate_limit("frooble-$$", 1, 20, 60) = 0');
+  };
 
-  is(
-    $rl->rate_limit("frooble-$$", 19, 20, 60),
-    0,
-    '$rl->rate_limit("frooble-$$", 19, 20, 60) = 0');
+  time_it {
+    is(
+      $rl->rate_limit("frooble-$$", 19, 20, 60),
+      0,
+      '$rl->rate_limit("frooble-$$", 19, 20, 60) = 0');
+  };
 
-  is(
-    $rl->rate_limit("frooble-$$", 1, 20, 60),
-    1,
-    '$rl->rate_limit("frooble-$$", 1, 20, 60) = 1');
+  time_it {
+    is(
+      $rl->rate_limit("frooble-$$", 1, 20, 60),
+      1,
+      '$rl->rate_limit("frooble-$$", 1, 20, 60) = 1');
+  };
 
   is \@error, [], 'no errors';
 
