@@ -50,10 +50,8 @@ impl Rl {
             let key = format!("{}{}", prefix, now);
             match client.add(&key, 0, rate_seconds + 1) {
                 Ok(()) => (),
-                Err(e) => match e {
-                    CommandError(e) if e == KeyExists => (),
-                    e => bail!(e),
-                },
+                Err(CommandError(e)) if e == KeyExists => (),
+                Err(e) => bail!(e),
             };
 
             let keys: Vec<String> = (0..rate_seconds)
