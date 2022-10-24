@@ -89,19 +89,37 @@ connect to the Memcached server, it will B<allow> the request.
  my $rl = Memcached::RateLimit->new($url);
 
 Create a new instance of L<Memcached::RateLimit>.  The URL should be of the
-form shown in the L<synopsis/SYNOPSIS> above.
+form shown in the L<synopsis|/SYNOPSIS> above.
 
 =head1 METHODS
 
 =head2 rate_limit
 
- $rl->rate_limt($name, $size, $rate_max, $rate_seconds);
+ my $limited = $rl->rate_limt($name, $size, $rate_max, $rate_seconds);
+
+This method returns a boolean true, if a request of C<$size> exceeds the
+rate limit of C<$rate_max> over the past C<$rate_seconds>.  If you only
+want to rate limit the number of requests then you can set C<$size> to 1.
+
+This method will return a boolean false, and increment the appropriate
+counters if the requests fits within the rate limit.
+
+This method will B<also> return boolean false, if it is unable to connect
+to or otherwise experiences an error talking to the memcached server.
+In this case it will also call the L<error handler|/error_handler>.
 
 =head2 error_handler
 
  $rl->error_handler(sub ($rl, $message) {
    ...
  });
+
+This method will set the error handler, to be called in the case of an
+error with the memcached server.  It will pass in the instance of
+L<Memcached::RateLimit> as C<$rl> and a diagnostic as C<$message>.
+Since this module will fail open, it is probably useful to increment
+error counters and provide diagnostics with this method to your monitoring
+system.
 
 =head1 SEE ALSO
 
