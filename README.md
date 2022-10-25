@@ -57,6 +57,11 @@ The following schemes are supported:
 You can append these query parameters
 to the URL:
 
+- `connect_timeout`
+
+    **Experimental**: Connect timeout in seconds.  May be specified as a
+    floating point, that is `0.2` is 20 milliseconds.
+
 - `protocol`
 
     If set to `ascii` this will use the ASCII protocol instead of binary.
@@ -68,6 +73,9 @@ to the URL:
 - `timeout`
 
     IO timeout in seconds.
+
+    **Experimental**: May be specified as a 
+    floating point, that is `0.2` is 20 milliseconds.
 
 - `verify_mode`
 

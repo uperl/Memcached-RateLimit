@@ -48,7 +48,7 @@ subtest_streamed 'live tests' => sub {
       $port ||= 11211;
 
       # note: connect_timeout not yet recognized, but hopefully will be soon
-      my $url = "$scheme{$name}://$host:$port?timeout=2&connect_timeout=2";
+      my $url = "$scheme{$name}://$host:$port?timeout=5.5&connect_timeout=5.5";
       $url .= "&verify_mode=none" if $name eq 'tls';
       note "using $url";
 
