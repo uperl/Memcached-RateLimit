@@ -9,3 +9,7 @@ crate-type = ["cdylib"]
 [dependencies]
 memcache = "0.16.0"
 anyhow = "1.0.65"
+
+[patch.crates-io]
+# https://github.com/aisk/rust-memcache/pull/135
+memcache = { git = 'https://github.com/plicease-pr/rust-memcache', branch = 'graham/fractional-timeout' }

@@ -114,6 +114,11 @@ to the URL:
 
 =over 4
 
+=item C<connect_timeout>
+
+B<Experimental>: Connect timeout in seconds.  May be specified as a
+floating point, that is C<0.2> is 20 milliseconds.
+
 =item C<protocol>
 
 If set to C<ascii> this will use the ASCII protocol instead of binary.
@@ -125,6 +130,9 @@ Boolean C<true> or C<false>.
 =item C<timeout>
 
 IO timeout in seconds.
+
+B<Experimental>: May be specified as a 
+floating point, that is C<0.2> is 20 milliseconds.
 
 =item C<verify_mode>
 

@@ -123,8 +123,7 @@ dependencies = [
 [[package]]
 name = "memcache"
 version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "757b4de02817c63ff4efc98a282b305977a7468b2bdf2085c140cdab1604fa61"
+source = "git+https://github.com/plicease-pr/rust-memcache?branch=graham/fractional-timeout#0731815232fed5339ab2148437a8a0c415ab226c"
 dependencies = [
  "byteorder",
  "enum_dispatch",
