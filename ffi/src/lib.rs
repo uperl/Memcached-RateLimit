@@ -10,12 +10,15 @@ use std::collections::HashMap;
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::str;
+use std::time::Duration;
 use std::time::SystemTime;
 
 struct Rl {
     url: Url,
     client: Option<Client>,
     error: CString,
+    read_timeout: Option<Duration>,
+    write_timeout: Option<Duration>,
 }
 
 impl Rl {
@@ -25,6 +28,8 @@ impl Rl {
             url: url,
             client: None,
             error: CString::new("")?,
+            read_timeout: None,
+            write_timeout: None,
         })
     }
 
@@ -39,8 +44,11 @@ impl Rl {
 
         /* re-connect if necessary */
         if let None = self.client {
-            self.client = Some(Client::connect(String::from(self.url.clone()))?)
-        };
+            let client = Client::connect(String::from(self.url.clone()))?;
+            client.set_read_timeout(self.read_timeout)?;
+            client.set_write_timeout(self.write_timeout)?;
+            self.client = Some(client);
+        }
 
         if let Some(client) = &self.client {
             let now = SystemTime::now()
@@ -134,9 +142,7 @@ pub extern "C" fn rl__rate_limit(
     let prefix = unsafe { CStr::from_ptr(prefix) };
 
     STORE.with(|it| {
-        let mut it = it.borrow_mut();
-
-        return match it.get_mut(&index) {
+        return match it.borrow_mut().get_mut(&index) {
             Some(rl) => match rl.rate_limit(prefix, size, rate_max, rate_seconds) {
                 Ok(true) => 1,
                 Ok(false) => 0,
@@ -156,9 +162,7 @@ pub extern "C" fn rl__rate_limit(
 #[no_mangle]
 pub extern "C" fn rl__error(index: u64) -> *const i8 {
     STORE.with(|it| {
-        let it = it.borrow();
-
-        let error = match it.get(&index) {
+        let error = match it.borrow().get(&index) {
             Some(rl) => rl.error.as_ptr(),
             None => b"Invalid object index\0".as_ptr() as *const i8,
         };
@@ -168,9 +172,32 @@ pub extern "C" fn rl__error(index: u64) -> *const i8 {
 }
 
 #[no_mangle]
+pub extern "C" fn rl_set_write_timeout(index: u64, timeout: f64) {
+    STORE.with(|it| {
+        if let Some(rl) = it.borrow_mut().get_mut(&index) {
+            rl.write_timeout = Some(Duration::from_secs_f64(timeout));
+            if let Some(client) = &rl.client {
+                let _ = client.set_write_timeout(rl.write_timeout);
+            }
+        }
+    });
+}
+
+#[no_mangle]
+pub extern "C" fn rl_set_read_timeout(index: u64, timeout: f64) {
+    STORE.with(|it| {
+        if let Some(rl) = it.borrow_mut().get_mut(&index) {
+            rl.read_timeout = Some(Duration::from_secs_f64(timeout));
+            if let Some(client) = &rl.client {
+                let _ = client.set_read_timeout(rl.read_timeout);
+            }
+        }
+    });
+}
+
+#[no_mangle]
 pub extern "C" fn rl_DESTROY(index: u64) {
     STORE.with(|it| {
-        let mut it = it.borrow_mut();
-        it.remove(&index);
+        it.borrow_mut().remove(&index);
     })
 }

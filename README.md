@@ -92,6 +92,22 @@ This method will **also** return boolean false, if it is unable to connect
 to or otherwise experiences an error talking to the memcached server.
 In this case it will also call the [error handler](#error_handler).
 
+## set\_read\_timeout
+
+```
+$rl->set_read_timeout($secs);
+```
+
+Sets the IO Read timeout to `$secs`, may be fractional.
+
+## set\_write\_timeout
+
+```
+$rl->set_write_timeout($secs);
+```
+
+Sets the IO Write timeout to `$secs`, may be fractional.
+
 ## error\_handler
 
 ```perl

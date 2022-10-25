@@ -19,8 +19,10 @@ package Memcached::RateLimit {
     bless \$index, $class;
   });
 
-  $ffi->attach( _rate_limit => ['rl','string','u32','u32','u32'] => 'i32' );
-  $ffi->attach( _error => ['rl'] => 'string' );
+  $ffi->attach( _rate_limit       => ['rl','string','u32','u32','u32'] => 'i32' );
+  $ffi->attach( _error            => ['rl'] => 'string'                         );
+  $ffi->attach( set_read_timeout  => ['rl', 'f64']                              );
+  $ffi->attach( set_write_timeout => ['rl', 'f64']                              );
 
   $ffi->attach( DESTROY => ['rl'] => sub ($xsub, $self) {
     delete $keep{$$self};
@@ -146,6 +148,18 @@ counters if the requests fits within the rate limit.
 This method will B<also> return boolean false, if it is unable to connect
 to or otherwise experiences an error talking to the memcached server.
 In this case it will also call the L<error handler|/error_handler>.
+
+=head2 set_read_timeout
+
+ $rl->set_read_timeout($secs);
+
+Sets the IO Read timeout to C<$secs>, may be fractional.
+
+=head2 set_write_timeout
+
+ $rl->set_write_timeout($secs);
+
+Sets the IO Write timeout to C<$secs>, may be fractional.
 
 =head2 error_handler
 
