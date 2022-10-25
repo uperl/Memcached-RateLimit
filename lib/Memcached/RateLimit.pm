@@ -91,6 +91,45 @@ connect to the Memcached server, it will B<allow> the request.
 Create a new instance of L<Memcached::RateLimit>.  The URL should be of the
 form shown in the synopsis above.
 
+The following schemes are supported:
+
+=over 4
+
+=item C<memcache>
+
+=item C<memcache+tcp>
+
+=item C<memcache+tls>
+
+=item C<memcache+udp>
+
+=item C<memcache+unix>
+
+=back
+
+You can append these query parameters
+to the URL:
+
+=over 4
+
+=item C<protocol>
+
+If set to C<ascii> this will use the ASCII protocol instead of binary.
+
+=item C<tcp_nodelay>
+
+Boolean C<true> or C<false>.
+
+=item C<timeout>
+
+IO timeout in seconds.
+
+=item C<verify_mode>
+
+For TLS, this can be set to C<none> or C<peer>.
+
+=back
+
 =head1 METHODS
 
 =head2 rate_limit
