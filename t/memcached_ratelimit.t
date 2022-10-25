@@ -1,6 +1,7 @@
 use Test2::V0 -no_srand => 1;
 use Test2::Tools::Subtest qw( subtest_streamed );
 use experimental qw( signatures );
+use Time::HiRes qw( time );
 use Memcached::RateLimit;
 use YAML ();
 
@@ -46,7 +47,8 @@ subtest_streamed 'live tests' => sub {
       $host ||= '127.0.0.1';
       $port ||= 11211;
 
-      my $url = "$scheme{$name}://$host:$port?timeout=5";
+      # note: connect_timeout not yet recognized, but hopefully will be soon
+      my $url = "$scheme{$name}://$host:$port?timeout=2&connect_timeout=2";
       $url .= "&verify_mode=none" if $name eq 'tls';
       note "using $url";
 
