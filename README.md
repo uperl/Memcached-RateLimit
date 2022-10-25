@@ -46,6 +46,33 @@ my $rl = Memcached::RateLimit->new($url);
 Create a new instance of [Memcached::RateLimit](https://metacpan.org/pod/Memcached::RateLimit).  The URL should be of the
 form shown in the synopsis above.
 
+The following schemes are supported:
+
+- `memcache`
+- `memcache+tcp`
+- `memcache+tls`
+- `memcache+udp`
+- `memcache+unix`
+
+You can append these query parameters
+to the URL:
+
+- `protocol`
+
+    If set to `ascii` this will use the ASCII protocol instead of binary.
+
+- `tcp_nodelay`
+
+    Boolean `true` or `false`.
+
+- `timeout`
+
+    IO timeout in seconds.
+
+- `verify_mode`
+
+    For TLS, this can be set to `none` or `peer`.
+
 # METHODS
 
 ## rate\_limit
