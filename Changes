@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.02      2022-10-25 09:05:27 -0600
   - Experimental support for connection timeout,
     and fractional timeouts (gh#1, gh#9)
 
