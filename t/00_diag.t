@@ -15,9 +15,11 @@ $modules{$_} = $_ for qw(
   FFI::Build::MM
   FFI::Platypus
   FFI::Platypus::Lang::Rust
+  Ref::Util
   Test2::Tools::Rustfmt
   Test2::Tools::Subtest
   Test2::V0
+  URI::Escape
   YAML
 );
 

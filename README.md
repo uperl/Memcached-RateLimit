@@ -41,6 +41,7 @@ connect to the Memcached server, it will **allow** the request.
 
 ```perl
 my $rl = Memcached::RateLimit->new($url);
+my $rl = Memcached::RateLimit->new(\%config);
 ```
 
 Create a new instance of [Memcached::RateLimit](https://metacpan.org/pod/Memcached::RateLimit).  The URL should be of the
@@ -80,6 +81,34 @@ to the URL:
 - `verify_mode`
 
     For TLS, this can be set to `none` or `peer`.
+
+\[version 0.03\]
+
+You can provide a `%Config` hash instead of a URL.  All of the
+query parameters mentioned above can be provided in addition to
+these:
+
+- `scheme`
+
+    The scheme (example: `memcache` or `memcache+tls`).
+
+- `host`
+
+    The server hostname or IPv4/IPv6 address.
+
+- `port`
+
+    The TCP or UDP port to connect to.
+
+- `read_timeout`
+
+    The read timeout in seconds.  May be specified as a
+    floating point, that is `0.2` is 20 milliseconds.
+
+- `write_timeout`
+
+    The write timeout in seconds.  May be specified as a
+    floating point, that is `0.2` is 20 milliseconds.
 
 # METHODS
 
