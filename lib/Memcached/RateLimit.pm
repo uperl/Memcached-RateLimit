@@ -7,6 +7,8 @@ package Memcached::RateLimit {
   # ABSTRACT: Sliding window rate limiting with Memcached
 
   use FFI::Platypus 2.00;
+  use Ref::Util qw( is_plain_hashref );
+  use Carp qw( croak );
 
   my $ffi = FFI::Platypus->new( api => 2, lang => 'Rust' );
   $ffi->bundle;
@@ -14,9 +16,52 @@ package Memcached::RateLimit {
   $ffi->type("object(@{[ __PACKAGE__ ]})" => 'rl');
   our %keep;
 
+  sub _hash_to_url (%config)
+  {
+    my %q;
+    my $scheme          = delete $config{scheme}            // 'memcache';
+    my $host            = delete $config{host}              // '127.0.0.1';
+    my $port            = delete $config{port}              // '11211';
+    my $read_timeout    = delete $config{read_timeout};
+    my $write_timeout   = delete $config{write_timeout};
+    $q{connect_timeout} = delete $config{connect_timeout}   if defined $config{connect_timeout};
+    $q{protocol}        = delete $config{protocol}          if defined $config{protocol};
+    $q{tcp_nodelay}     = delete $config{tcp_nodelay}       if defined $config{tcp_nodelay};
+    $q{timeout}         = delete $config{timeout}           if defined $config{timeout};
+    $q{verify_mode}     = delete $config{verify_mode}       if defined $config{verify_mode};
+
+    require URI::Escape;
+
+    croak("Unknown options: @{[ sort keys %config ]}") if %config;
+    # host may need to be escaped if it is a IPv6 address
+    my $url = "$scheme://@{[ URI::Escape::uri_escape($host) ]}:$port";
+
+    if(%q)
+    {
+      # In theory none of the query parameters should have characters that need to be
+      # escaped, but since we have to pull in uri_escape for the hostname, we may as
+      # well escape these too.
+      $url .= "?" . join '&', map { join '=', $_, URI::Escape::uri_escape($q{$_}) } sort keys %q;
+    }
+
+    ($url, $read_timeout, $write_timeout);
+  }
+
   $ffi->attach( new => ['string'] => 'u64' => sub ($xsub, $class, $url) {
+
+    my $read_timeout;
+    my $write_timeout;
+
+    ($url, $read_timeout, $write_timeout) = _hash_to_url(%$url)
+      if is_plain_hashref $url;
+
     my $index = $xsub->($url);
-    bless \$index, $class;
+    my $self = bless \$index, $class;
+
+    $self->set_read_timeout($read_timeout) if defined $read_timeout;
+    $self->set_write_timeout($write_timeout) if defined $write_timeout;
+
+    $self;
   });
 
   $ffi->attach( _rate_limit       => ['rl','string','u32','u32','u32'] => 'i32' );
@@ -89,6 +134,7 @@ connect to the Memcached server, it will B<allow> the request.
 =head2 new
 
  my $rl = Memcached::RateLimit->new($url);
+ my $rl = Memcached::RateLimit->new(\%config);
 
 Create a new instance of L<Memcached::RateLimit>.  The URL should be of the
 form shown in the synopsis above.
@@ -137,6 +183,38 @@ floating point, that is C<0.2> is 20 milliseconds.
 =item C<verify_mode>
 
 For TLS, this can be set to C<none> or C<peer>.
+
+=back
+
+[version 0.03]
+
+You can provide a C<%Config> hash instead of a URL.  All of the
+query parameters mentioned above can be provided in addition to
+these:
+
+=over 4
+
+=item C<scheme>
+
+The scheme (example: C<memcache> or C<memcache+tls>).
+
+=item C<host>
+
+The server hostname or IPv4/IPv6 address.
+
+=item C<port>
+
+The TCP or UDP port to connect to.
+
+=item C<read_timeout>
+
+The read timeout in seconds.  May be specified as a
+floating point, that is C<0.2> is 20 milliseconds.
+
+=item C<write_timeout>
+
+The write timeout in seconds.  May be specified as a
+floating point, that is C<0.2> is 20 milliseconds.
 
 =back
 

@@ -94,6 +94,38 @@ subtest_streamed 'live tests' => sub {
   }
 };
 
+subtest_streamed 'hash config' => sub {
+
+  is
+    [Memcached::RateLimit::_hash_to_url()],
+    ["memcache://127.0.0.1:11211", undef, undef],
+    'default';
+
+  is
+    [Memcached::RateLimit::_hash_to_url(
+       scheme          => 'memcache+tls',
+       read_timeout    => 0.4,
+       write_timeout   => 0.5,
+       host            => '1.2.3.4',
+       port            => 12345,
+       connect_timeout => 0.2,
+       protocol        =>'ascii',
+       timeout         => 0.3,
+       verify_mode     => 'none' )],
+    ['memcache+tls://1.2.3.4:12345?connect_timeout=0.2&protocol=ascii&timeout=0.3&verify_mode=none',0.4,0.5],
+    'the works';
+
+  is
+    [Memcached::RateLimit::_hash_to_url( host => '::1')],
+    ['memcache://%3A%3A1:11211', undef, undef],
+    'IPv6';
+
+  is
+    dies { Memcached::RateLimit::_hash_to_url( x => 'y', z => 1, ) },
+    match qr/Unknown options: x z/,
+    'error on invalid arg';
+};
+
 subtest_streamed 'counterfit object!' => sub {
 
   my $rl = bless \do { my $x = 42}, 'Memcached::RateLimit';
