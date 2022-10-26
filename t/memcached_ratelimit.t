@@ -98,7 +98,7 @@ subtest_streamed 'hash config' => sub {
 
   is
     [Memcached::RateLimit::_hash_to_url()],
-    ["memcache://127.0.0.1:11211", undef, undef],
+    ["memcache://127.0.0.1:11211", undef, undef, undef],
     'default';
 
   is
@@ -111,19 +111,127 @@ subtest_streamed 'hash config' => sub {
        connect_timeout => 0.2,
        protocol        =>'ascii',
        timeout         => 0.3,
+       retry           => 10,
        verify_mode     => 'none' )],
-    ['memcache+tls://1.2.3.4:12345?connect_timeout=0.2&protocol=ascii&timeout=0.3&verify_mode=none',0.4,0.5],
+    ['memcache+tls://1.2.3.4:12345?connect_timeout=0.2&protocol=ascii&timeout=0.3&verify_mode=none',0.4,0.5,10],
     'the works';
 
   is
     [Memcached::RateLimit::_hash_to_url( host => '::1')],
-    ['memcache://%3A%3A1:11211', undef, undef],
+    ['memcache://%3A%3A1:11211', undef, undef, undef],
     'IPv6';
 
   is
     dies { Memcached::RateLimit::_hash_to_url( x => 'y', z => 1, ) },
     match qr/Unknown options: x z/,
     'error on invalid arg';
+};
+
+subtest_streamed 'retry' => sub {
+
+  my @ret;
+  my @error;
+
+  my $mock = mock 'Memcached::RateLimit' => (
+      override => [
+        _rate_limit => sub {
+          shift @ret;
+        },
+        _error => sub {
+          shift @error;
+        },
+      ],
+  );
+
+  my $rl = Memcached::RateLimit->new({
+    retry => 3,
+  });
+
+  my @cb_error;
+  my @cb_final_error;
+
+  $rl->error_handler(sub ($, $message) {
+    push @cb_error, $message;
+  });
+
+  $rl->final_error_handler(sub ($, $message) {
+    push @cb_final_error, $message;
+  });
+
+  subtest 'default for instance (3)' => sub {
+      @ret   = (-1,-1,-1);
+      @error = ('err1','err2','err3');
+      @cb_error       = ();
+      @cb_final_error = ();
+
+      is(
+        $rl->rate_limit("key", 1, 20, 60),
+        0,
+        'fail open');
+
+      is
+        \@cb_error,
+        [ 'err1','err2','err3'],
+        'error callback';
+
+      is
+        \@cb_final_error,
+        ['err3'],
+        'final error callback';
+
+  };
+
+  subtest 'override instance default when calling (2)' => sub {
+      @ret            = (-1,-1,-1);
+      @error          = ('err1','err2','err3');
+      @cb_error       = ();
+      @cb_final_error = ();
+
+      is(
+        $rl->rate_limit("key", 1, 20, 60, 2),
+        0,
+        'fail open');
+
+      is
+        \@cb_error,
+        [ 'err1','err2'],
+        'error callback';
+
+      is
+        \@cb_final_error,
+        ['err2'],
+        'final error callback';
+
+  };
+
+  # don't perminently delete, because we want to check that the our
+  # variables have been cleaned up later.
+  local $Memcached::RateLimit::retry{$$rl} = $Memcached::RateLimit::retry{$$rl};
+  delete $Memcached::RateLimit::retry{$$rl};
+
+  subtest 'regular default' => sub {
+      @ret            = (-1,-1,-1);
+      @error          = ('err1','err2','err3');
+      @cb_error       = ();
+      @cb_final_error = ();
+
+      is(
+        $rl->rate_limit("key", 1, 20, 60),
+        0,
+        'fail open');
+
+      is
+        \@cb_error,
+        [ 'err1'],
+        'error callback';
+
+      is
+        \@cb_final_error,
+        ['err1'],
+        'final error callback';
+
+  };
+
 };
 
 subtest_streamed 'counterfit object!' => sub {
@@ -151,6 +259,25 @@ subtest_streamed 'counterfit object!' => sub {
     "expected error";
 
   undef $rl;
+};
+
+subtest_streamed 'cleanup' => sub {
+
+  is
+    \%Memcached::RateLimit::retry,
+    {},
+    'retry';
+
+  is
+    \%Memcached::RateLimit::error_handler,
+    {},
+    'error_handler';
+
+  is
+    \%Memcached::RateLimit::final_error_handler,
+    {},
+    'final_error_handler';
+
 };
 
 done_testing;

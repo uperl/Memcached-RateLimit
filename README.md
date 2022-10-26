@@ -75,12 +75,18 @@ to the URL:
 
     IO timeout in seconds.
 
-    **Experimental**: May be specified as a 
+    **Experimental**: May be specified as a
     floating point, that is `0.2` is 20 milliseconds.
 
 - `verify_mode`
 
     For TLS, this can be set to `none` or `peer`.
+
+- `retry`
+
+    \[version 0.04\]
+
+    The default instance number of retries.
 
 \[version 0.03\]
 
@@ -116,6 +122,7 @@ these:
 
 ```perl
 my $limited = $rl->rate_limt($name, $size, $rate_max, $rate_seconds);
+my $limited = $rl->rate_limt($name, $size, $rate_max, $rate_seconds, $retry);
 ```
 
 This method returns a boolean true, if a request of `$size` exceeds the
@@ -128,6 +135,13 @@ counters if the requests fits within the rate limit.
 This method will **also** return boolean false, if it is unable to connect
 to or otherwise experiences an error talking to the memcached server.
 In this case it will also call the [error handler](#error_handler).
+
+\[version 0.04\]
+
+If `$retry` is provided then if there are errors talking to memcached, it
+will be attempted `$retry` times.  If this parameter is not provided, then
+the default instance retry limit will be used, and if there is not instance
+default the class default of `1` will be used.
 
 ## set\_read\_timeout
 
@@ -159,6 +173,19 @@ error with the memcached server.  It will pass in the instance of
 Since this module will fail open, it is probably useful to increment
 error counters and provide diagnostics with this method to your monitoring
 system.
+
+## final\_error\_handler
+
+\[version 0.04\]
+
+```perl
+$rl->final_error_handler(sub ($rl, $message) {
+});
+```
+
+This method is like the [error\_handler method](#error_handler), but it
+only gets called at the end if none of the retry attempts succeed.
+The last error message is passed in.
 
 # SEE ALSO
 
