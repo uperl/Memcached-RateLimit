@@ -82,12 +82,6 @@ to the URL:
 
     For TLS, this can be set to `none` or `peer`.
 
-- `retry`
-
-    \[version 0.04\]
-
-    The default instance number of retries.
-
 \[version 0.03\]
 
 You can provide a `%Config` hash instead of a URL.  All of the
@@ -115,6 +109,12 @@ these:
 
     The write timeout in seconds.  May be specified as a
     floating point, that is `0.2` is 20 milliseconds.
+
+- `retry`
+
+    \[version 0.04\]
+
+    The default instance number of retries.
 
 # METHODS
 

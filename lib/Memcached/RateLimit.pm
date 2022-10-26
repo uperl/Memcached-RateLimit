@@ -203,12 +203,6 @@ floating point, that is C<0.2> is 20 milliseconds.
 
 For TLS, this can be set to C<none> or C<peer>.
 
-=item C<retry>
-
-[version 0.04]
-
-The default instance number of retries.
-
 =back
 
 [version 0.03]
@@ -240,6 +234,12 @@ floating point, that is C<0.2> is 20 milliseconds.
 
 The write timeout in seconds.  May be specified as a
 floating point, that is C<0.2> is 20 milliseconds.
+
+=item C<retry>
+
+[version 0.04]
+
+The default instance number of retries.
 
 =back
 
