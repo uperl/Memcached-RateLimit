@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.04      2022-10-25 19:40:17 -0600
   - Optional retries added (gh#11)
 
 0.03      2022-10-25 13:06:39 -0600
