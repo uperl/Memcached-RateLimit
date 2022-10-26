@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+  - Optional retries added (gh#11)
 
 0.03      2022-10-25 13:06:39 -0600
   - Constructor can now take a config hash reference

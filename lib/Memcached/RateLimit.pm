@@ -14,7 +14,9 @@ package Memcached::RateLimit {
   $ffi->bundle;
   $ffi->mangler(sub ($name) { "rl_$name" });
   $ffi->type("object(@{[ __PACKAGE__ ]})" => 'rl');
-  our %keep;
+  our %retry;
+  our %error_handler;
+  our %final_error_handler;
 
   sub _hash_to_url (%config)
   {
@@ -24,6 +26,7 @@ package Memcached::RateLimit {
     my $port            = delete $config{port}              // '11211';
     my $read_timeout    = delete $config{read_timeout};
     my $write_timeout   = delete $config{write_timeout};
+    my $retry           = delete $config{retry};
     $q{connect_timeout} = delete $config{connect_timeout}   if defined $config{connect_timeout};
     $q{protocol}        = delete $config{protocol}          if defined $config{protocol};
     $q{tcp_nodelay}     = delete $config{tcp_nodelay}       if defined $config{tcp_nodelay};
@@ -44,19 +47,22 @@ package Memcached::RateLimit {
       $url .= "?" . join '&', map { join '=', $_, URI::Escape::uri_escape($q{$_}) } sort keys %q;
     }
 
-    ($url, $read_timeout, $write_timeout);
+    ($url, $read_timeout, $write_timeout, $retry);
   }
 
   $ffi->attach( new => ['string'] => 'u64' => sub ($xsub, $class, $url) {
 
     my $read_timeout;
     my $write_timeout;
+    my $retry;
 
-    ($url, $read_timeout, $write_timeout) = _hash_to_url(%$url)
+    ($url, $read_timeout, $write_timeout, $retry) = _hash_to_url(%$url)
       if is_plain_hashref $url;
 
     my $index = $xsub->($url);
     my $self = bless \$index, $class;
+
+    $retry{$$self} = $retry if defined $retry;
 
     $self->set_read_timeout($read_timeout) if defined $read_timeout;
     $self->set_write_timeout($write_timeout) if defined $write_timeout;
@@ -70,29 +76,42 @@ package Memcached::RateLimit {
   $ffi->attach( set_write_timeout => ['rl', 'f64']                              );
 
   $ffi->attach( DESTROY => ['rl'] => sub ($xsub, $self) {
-    delete $keep{$$self};
+    delete $error_handler{$$self};
+    delete $final_error_handler{$$self};
+    delete $retry{$$self};
   });
 
   sub error_handler ($self, $sub)
   {
-    $keep{$$self} = $sub;
+    $error_handler{$$self} = $sub;
   }
 
-  sub rate_limit ($self, $name, $size, $rate_max, $rate_seconds)
+  sub final_error_handler ($self, $sub)
   {
-    my $ret = _rate_limit($self, $name, $size, $rate_max, $rate_seconds);
-    if($ret == -1)
-    {
-      $keep{$$self}->($self, $self->_error) if defined $keep{$$self};
-      # fail open
-      return 0;
-    }
-    else
-    {
-      return $ret;
-    }
+    $final_error_handler{$$self} = $sub;
   }
 
+  sub rate_limit ($self, $name, $size, $rate_max, $rate_seconds, $retry=undef)
+  {
+    $retry //= $retry{$$self} // 1;
+    my $error;
+    for(1..$retry)
+    {
+      my $ret = _rate_limit($self, $name, $size, $rate_max, $rate_seconds);
+      if($ret == -1)
+      {
+        $error_handler{$$self}->($self, $error = $self->_error) if defined $error_handler{$$self};
+        next;
+      }
+      else
+      {
+        return $ret;
+      }
+    }
+    # fail open
+    $final_error_handler{$$self}->($self, $error //= $self->_error) if defined $final_error_handler{$$self};
+    return 0;
+  }
 
 }
 
@@ -101,12 +120,12 @@ package Memcached::RateLimit {
 =head1 SYNOPSIS
 
  use Memcached::RateLimit;
-
+ 
  my $rl = Memcached::RateLimit->new("memcache://localhost:11211");
  $rl->error_handler(sub ($rl, $message) {
    warn "rate limit error: $message";
  });
-
+ 
  # allow 30 requests per minute
  if($rl->rate_limit("resource", 1, 30, 60))
  {
@@ -177,12 +196,18 @@ Boolean C<true> or C<false>.
 
 IO timeout in seconds.
 
-B<Experimental>: May be specified as a 
+B<Experimental>: May be specified as a
 floating point, that is C<0.2> is 20 milliseconds.
 
 =item C<verify_mode>
 
 For TLS, this can be set to C<none> or C<peer>.
+
+=item C<retry>
+
+[version 0.04]
+
+The default instance number of retries.
 
 =back
 
@@ -223,6 +248,7 @@ floating point, that is C<0.2> is 20 milliseconds.
 =head2 rate_limit
 
  my $limited = $rl->rate_limt($name, $size, $rate_max, $rate_seconds);
+ my $limited = $rl->rate_limt($name, $size, $rate_max, $rate_seconds, $retry);
 
 This method returns a boolean true, if a request of C<$size> exceeds the
 rate limit of C<$rate_max> over the past C<$rate_seconds>.  If you only
@@ -234,6 +260,13 @@ counters if the requests fits within the rate limit.
 This method will B<also> return boolean false, if it is unable to connect
 to or otherwise experiences an error talking to the memcached server.
 In this case it will also call the L<error handler|/error_handler>.
+
+[version 0.04]
+
+If C<$retry> is provided then if there are errors talking to memcached, it
+will be attempted C<$retry> times.  If this parameter is not provided, then
+the default instance retry limit will be used, and if there is not instance
+default the class default of C<1> will be used.
 
 =head2 set_read_timeout
 
@@ -259,6 +292,17 @@ L<Memcached::RateLimit> as C<$rl> and a diagnostic as C<$message>.
 Since this module will fail open, it is probably useful to increment
 error counters and provide diagnostics with this method to your monitoring
 system.
+
+=head2 final_error_handler
+
+[version 0.04]
+
+ $rl->final_error_handler(sub ($rl, $message) {
+ });
+
+This method is like the L<error_handler method|/error_handler>, but it
+only gets called at the end if none of the retry attempts succeed.
+The last error message is passed in.
 
 =head1 SEE ALSO
 
