@@ -24,26 +24,39 @@ sub time_it :prototype(&) {
   note "clocking in at: @{[ time - $start ]}s";
 }
 
+sub slow_down {
+  note "sleeping for 2s";
+  sleep 2;
+}
+
 my %name = (
   simple => 'MEMCACHED_RATELIMIT_TEST',
   tls    => 'MEMCACHED_RATELIMIT_TLS_TEST',
+  slow   => 'MEMCACHED_RATELIMIT_TEST,MEMCACHED_RATELIMIT_TEST_SLOW',
 );
 
 my %scheme = (
   simple => 'memcache+tcp',
   tls    => 'memcache+tls',
+  slow   => 'memcache+tcp',
 );
 
 subtest_streamed 'live tests' => sub {
+
+  my $i = 1;
 
   foreach my $name (sort keys %name) {
 
     subtest_streamed $name => sub {
 
-      skip_all "Set $name{$name} to run tests"
-        unless defined $ENV{$name{$name}};
+      foreach my $env (split /,/, $name{$name})
+      {
+        skip_all "Set $name{$name} to run tests"
+          unless defined $ENV{$env};
+      }
 
-      my($host, $port) = split /:/, $ENV{$name{$name}};
+      $DB::single = 1;
+      my($host, $port) = split /:/, $ENV{[split /,/, $name{$name}]->[0]};
       $host ||= '127.0.0.1';
       $port ||= 11211;
 
@@ -64,25 +77,31 @@ subtest_streamed 'live tests' => sub {
         note "error:$message";
       });
 
-      time_it {
-        is(
-          $rl->rate_limit("frooble-$$", 1, 20, 60),
-          0,
-          '$rl->rate_limit("frooble-$$", 1, 20, 60) = 0');
-      };
+      my $key = "frooble-$$-@{[ $i++ ]}";
 
       time_it {
         is(
-          $rl->rate_limit("frooble-$$", 19, 20, 60),
+          $rl->rate_limit($key, 1, 20, 60),
           0,
-          '$rl->rate_limit("frooble-$$", 19, 20, 60) = 0');
+          '$rl->rate_limit($key, 1, 20, 60) = 0');
       };
+
+      slow_down if $name eq 'slow';
 
       time_it {
         is(
-          $rl->rate_limit("frooble-$$", 1, 20, 60),
+          $rl->rate_limit($key, 19, 20, 60),
+          0,
+          '$rl->rate_limit($key, 19, 20, 60) = 0');
+      };
+
+      slow_down if $name eq 'slow';
+
+      time_it {
+        is(
+          $rl->rate_limit($key, 1, 20, 60),
           1,
-          '$rl->rate_limit("frooble-$$", 1, 20, 60) = 1');
+          '$rl->rate_limit($key, 1, 20, 60) = 1');
       };
 
       is \@error, [], 'no errors';
