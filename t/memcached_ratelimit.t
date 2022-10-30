@@ -78,6 +78,7 @@ subtest_streamed 'live tests' => sub {
       });
 
       my $key = "frooble-$$-@{[ $i++ ]}";
+      note "using key: $key";
 
       time_it {
         is(
