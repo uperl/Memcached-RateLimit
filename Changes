@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.05      2022-10-30 06:26:50 -0600
   - Fixed bug where sum could be miscalculated over the
     rate_seconds period (gh#12)
   - Breaking change: the keys used internally have altered
