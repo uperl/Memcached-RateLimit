@@ -55,7 +55,6 @@ subtest_streamed 'live tests' => sub {
           unless defined $ENV{$env};
       }
 
-      $DB::single = 1;
       my($host, $port) = split /:/, $ENV{[split /,/, $name{$name}]->[0]};
       $host ||= '127.0.0.1';
       $port ||= 11211;
