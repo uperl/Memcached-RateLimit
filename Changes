@@ -1,6 +1,10 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+  - Fixed bug where sum could be miscalculated over the
+    rate_seconds period (gh#12)
+  - Breaking change: the keys used internally have altered
+    slightly to make it easier to debug
 
 0.04      2022-10-25 19:40:17 -0600
   - Optional retries added (gh#11)

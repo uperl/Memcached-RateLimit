@@ -55,15 +55,15 @@ impl Rl {
                 .duration_since(SystemTime::UNIX_EPOCH)?
                 .as_secs();
 
-            let key = format!("{}{}", prefix, now);
+            let key = format!("{}-{}", prefix, now);
             match client.add(&key, 0, rate_seconds + 1) {
                 Ok(()) => (),
                 Err(CommandError(e)) if e == KeyExists => (),
                 Err(e) => bail!(e),
             };
 
-            let keys: Vec<String> = (0..rate_seconds)
-                .map(|n| format!("{}{}", prefix, n))
+            let keys: Vec<String> = (1..u64::from(rate_seconds))
+                .map(|n| format!("{}-{}", prefix, now - n))
                 .collect();
             let keys: Vec<&str> = keys.iter().map(|s| &**s).collect();
             let tokens: HashMap<String, u32> = client.gets(&keys)?;
