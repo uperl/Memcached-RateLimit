@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.06      2022-10-31 12:26:26 -0600
   - connect_timeout and fractional timeouts are no longer
     experimental (gh#2, gh#13)
 
