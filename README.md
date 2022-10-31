@@ -60,7 +60,7 @@ to the URL:
 
 - `connect_timeout`
 
-    **Experimental**: Connect timeout in seconds.  May be specified as a
+    Connect timeout in seconds.  May be specified as a
     floating point, that is `0.2` is 20 milliseconds.
 
 - `protocol`
@@ -73,9 +73,7 @@ to the URL:
 
 - `timeout`
 
-    IO timeout in seconds.
-
-    **Experimental**: May be specified as a
+    IO timeout in seconds. May be specified as a
     floating point, that is `0.2` is 20 milliseconds.
 
 - `verify_mode`
