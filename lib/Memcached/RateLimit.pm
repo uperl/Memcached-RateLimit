@@ -13,7 +13,7 @@ package Memcached::RateLimit {
   my $ffi = FFI::Platypus->new( api => 2, lang => 'Rust' );
   $ffi->bundle;
   $ffi->mangler(sub ($name) { "rl_$name" });
-  $ffi->type("object(@{[ __PACKAGE__ ]})" => 'rl');
+  $ffi->type("object(@{[ __PACKAGE__ ]},u64)" => 'rl');
   our %retry;
   our %error_handler;
   our %final_error_handler;
