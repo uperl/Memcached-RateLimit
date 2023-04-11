@@ -192,7 +192,11 @@ The last error message is passed in.
 
 # AUTHOR
 
-Graham Ollis <plicease@cpan.org>
+Author: Graham Ollis <plicease@cpan.org>
+
+Contributors:
+
+Dylan Hardison (DHARDISON)
 
 # COPYRIGHT AND LICENSE
 

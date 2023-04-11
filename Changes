@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.08      2023-04-11 12:15:27 -0600
   - Remove ffi/Cargo.lock from git and not distribute, which
     is recommended for rust crate libraries (gh#15, gh#17, Dylan++)
 
