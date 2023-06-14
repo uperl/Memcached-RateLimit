@@ -1,6 +1,9 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+  - Use `*std::os::raw::c_char` instead of `*i8` for C strings.
+    This fixes the build on Linux Arm64, and possibly other
+    platforms (gh#18)
 
 0.08      2023-04-11 12:15:27 -0600
   - Remove ffi/Cargo.lock from git and not distribute, which
